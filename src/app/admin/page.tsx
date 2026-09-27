@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, CheckCircle, XCircle, FileDown, Eye, X } from "lucide-react";
+import { Search, CheckCircle, XCircle, FileDown, Eye, X, CreditCard } from "lucide-react";
 
 type Application = {
   id: string;
@@ -252,6 +252,9 @@ export default function AdminDashboard() {
                 </span>
                 
                 <div className="flex gap-3">
+                  <button onClick={() => window.open(`/admin/card/${selectedApp.id}`, '_blank')} className="flex items-center gap-2 bg-purple-700 text-white px-4 py-2 rounded text-sm font-bold hover:bg-purple-800">
+                    <CreditCard className="w-4 h-4" /> ID Card
+                  </button>
                   <button onClick={() => window.open(`/admin/pdf/${selectedApp.id}`, '_blank')} className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700">
                     <FileDown className="w-4 h-4" /> View PDF
                   </button>
