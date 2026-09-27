@@ -3,151 +3,199 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 
 const styles = StyleSheet.create({
   page: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    padding: 20,
+    flexDirection: 'column',
+    backgroundColor: '#050505',
+    padding: 0,
     fontFamily: 'Helvetica',
     position: 'relative',
   },
-  watermark: {
-    position: 'absolute',
-    top: 120,
-    left: 80,
-    opacity: 0.15,
-    transform: 'rotate(-30deg)',
-    fontSize: 70,
-    color: '#000000',
-    fontWeight: 'bold',
-    letterSpacing: 10,
-    zIndex: 10,
-  },
-  leftColumn: {
-    width: '35%',
+  header: {
+    height: 70,
+    backgroundColor: '#111111',
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 20,
+    borderBottomWidth: 3,
   },
-  rightColumn: {
-    width: '65%',
-    paddingLeft: 20,
-    justifyContent: 'center',
+  headerTextContainer: {
+    flex: 1,
+  },
+  title: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+  },
+  subtitle: {
+    color: '#888888',
+    fontSize: 7,
+    letterSpacing: 2,
+    marginTop: 2,
+    textTransform: 'uppercase',
+  },
+  photoWrapper: {
+    alignItems: 'center',
+    marginTop: 25,
   },
   photoContainer: {
-    width: 110,
-    height: 140,
-    backgroundColor: '#F3F4F6',
-    border: '2px solid #E5E7EB',
+    width: 140,
+    height: 175,
+    borderWidth: 2,
+    borderColor: '#333333',
+    backgroundColor: '#1A1A1A',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
   },
   photo: {
     width: '100%',
     height: '100%',
     objectFit: 'cover',
   },
-  orgHeader: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#4B5563',
-    textTransform: 'uppercase',
-    letterSpacing: 2,
-    marginBottom: 20,
-    borderBottom: '1px solid #E5E7EB',
-    paddingBottom: 5,
+  nameArea: {
+    alignItems: 'center',
+    marginTop: 15,
+    paddingHorizontal: 20,
   },
   name: {
-    fontSize: 24,
+    color: '#FFFFFF',
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#111827',
-    marginBottom: 4,
     textTransform: 'uppercase',
+    textAlign: 'center',
   },
-  roleDept: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 15,
+  role: {
+    color: '#AAAAAA',
+    fontSize: 10,
     textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginTop: 4,
   },
-  grid: {
+  detailsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    marginTop: 20,
+    paddingHorizontal: 25,
+    justifyContent: 'space-between',
   },
-  gridItem: {
-    width: '50%',
-    marginBottom: 10,
+  detailBox: {
+    width: '45%',
+    marginBottom: 12,
   },
   label: {
-    fontSize: 7,
-    color: '#9CA3AF',
+    fontSize: 6,
+    color: '#666666',
     textTransform: 'uppercase',
+    letterSpacing: 1,
     marginBottom: 2,
   },
   value: {
-    fontSize: 10,
-    color: '#374151',
+    fontSize: 9,
+    color: '#E0E0E0',
     fontWeight: 'bold',
+    textTransform: 'uppercase',
   },
-  accentBar: {
+  bottomSection: {
     position: 'absolute',
-    top: 0,
+    bottom: 20,
     left: 0,
-    width: 8,
-    height: '100%',
-    backgroundColor: '#3B82F6', // Default to corporate blue
+    right: 0,
+    alignItems: 'center',
+  },
+  barcodeBox: {
+    flexDirection: 'row',
+    height: 25,
+    width: 200,
+    justifyContent: 'center',
+    marginBottom: 5,
+  },
+  barThin: { width: 1.5, height: '100%', backgroundColor: '#FFFFFF', marginRight: 1.5 },
+  barThick: { width: 4, height: '100%', backgroundColor: '#FFFFFF', marginRight: 1.5 },
+  barMed: { width: 2.5, height: '100%', backgroundColor: '#FFFFFF', marginRight: 1.5 },
+  idNumber: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    letterSpacing: 3,
+    fontFamily: 'Courier',
+  },
+  microText: {
+    position: 'absolute',
+    top: 90,
+    left: -40,
+    transform: 'rotate(-90deg)',
+    color: '#222222',
+    fontSize: 5,
+    letterSpacing: 2,
+    fontFamily: 'Courier',
   }
 });
 
-export const DigitalCardPDF = ({ application, accentColor = '#3B82F6' }: { application: any, accentColor?: string }) => (
-  <Document>
-    {/* Landscape CR80 standard scaled: 486 x 306 */}
-    <Page size={[486, 306]} style={styles.page}>
-      
-      <View style={[styles.accentBar, { backgroundColor: accentColor }]} />
-      <Text style={styles.watermark}>PREVIEW</Text>
-      
-      <View style={styles.leftColumn}>
-        <View style={styles.photoContainer}>
-          {application.photoUrl ? (
-            <Image source={application.photoUrl} style={styles.photo} />
-          ) : (
-            <Text style={{ color: '#9CA3AF', fontSize: 10 }}>NO PHOTO</Text>
-          )}
-        </View>
-      </View>
-
-      <View style={styles.rightColumn}>
-        <Text style={styles.orgHeader}>Organization Identity Prototype</Text>
+export const DigitalCardPDF = ({ application, accentColor = '#D32F2F' }: { application: any, accentColor?: string }) => {
+  return (
+    <Document>
+      <Page size={[306, 486]} style={styles.page}>
         
-        <Text style={styles.name}>{application.cardHolderName || application.legalName || 'N/A'}</Text>
-        <Text style={styles.roleDept}>
-          {application.role || 'Member'} • {application.department || application.fanClubAffiliation || 'General'}
-        </Text>
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: accentColor }]}>
+          <View style={styles.headerTextContainer}>
+            <Text style={styles.title}>WME SECURITY</Text>
+            <Text style={styles.subtitle}>Global Access Credential</Text>
+          </View>
+          <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: accentColor, opacity: 0.8 }} />
+        </View>
 
-        <View style={styles.grid}>
-          <View style={styles.gridItem}>
-            <Text style={styles.label}>Access Category</Text>
-            <Text style={styles.value}>{application.accessLevel || 'N/A'}</Text>
-          </View>
-          <View style={styles.gridItem}>
-            <Text style={styles.label}>Reference No.</Text>
-            <Text style={styles.value}>{application.cardNumber || 'PENDING'}</Text>
-          </View>
-          <View style={styles.gridItem}>
-            <Text style={styles.label}>Issue Date</Text>
-            <Text style={styles.value}>
-              {application.issueDate ? new Date(application.issueDate).toLocaleDateString() : 'N/A'}
-            </Text>
-          </View>
-          <View style={styles.gridItem}>
-            <Text style={styles.label}>Expiration Date</Text>
-            <Text style={styles.value}>
-              {application.expiryDate ? new Date(application.expiryDate).toLocaleDateString() : 'N/A'}
-            </Text>
+        {/* Side Microtext */}
+        <Text style={styles.microText}>AUTH-HASH: {application.id || '000000000000'} // DO NOT DUPLICATE</Text>
+
+        {/* Photo */}
+        <View style={styles.photoWrapper}>
+          <View style={styles.photoContainer}>
+            {application.photoUrl ? (
+              <Image source={application.photoUrl} style={styles.photo} />
+            ) : (
+              <Text style={{ color: '#444', fontSize: 10 }}>NO PHOTO</Text>
+            )}
           </View>
         </View>
-      </View>
-      
-    </Page>
-  </Document>
-);
+
+        {/* Identity */}
+        <View style={styles.nameArea}>
+          <Text style={styles.name}>{application.cardHolderName || application.legalName || 'N/A'}</Text>
+          <Text style={styles.role}>{application.role || 'VIP GUEST'}</Text>
+        </View>
+
+        {/* Data Grid */}
+        <View style={styles.detailsGrid}>
+          <View style={styles.detailBox}>
+            <Text style={styles.label}>Clearance Level</Text>
+            <Text style={[styles.value, { color: accentColor }]}>{application.accessLevel || 'STANDARD'}</Text>
+          </View>
+          <View style={styles.detailBox}>
+            <Text style={styles.label}>Department</Text>
+            <Text style={styles.value}>{application.department || 'GENERAL'}</Text>
+          </View>
+          <View style={styles.detailBox}>
+            <Text style={styles.label}>Issued</Text>
+            <Text style={styles.value}>{application.issueDate ? new Date(application.issueDate).toLocaleDateString() : 'N/A'}</Text>
+          </View>
+          <View style={styles.detailBox}>
+            <Text style={styles.label}>Expires</Text>
+            <Text style={styles.value}>{application.expiryDate ? new Date(application.expiryDate).toLocaleDateString() : 'N/A'}</Text>
+          </View>
+        </View>
+
+        {/* Barcode & ID */}
+        <View style={styles.bottomSection}>
+          <View style={styles.barcodeBox}>
+            <View style={styles.barThick}/><View style={styles.barThin}/><View style={styles.barMed}/><View style={styles.barThin}/><View style={styles.barThick}/><View style={styles.barThin}/><View style={styles.barThin}/><View style={styles.barMed}/><View style={styles.barThick}/><View style={styles.barThin}/><View style={styles.barThin}/><View style={styles.barThick}/><View style={styles.barMed}/><View style={styles.barThin}/><View style={styles.barThin}/><View style={styles.barThick}/><View style={styles.barMed}/><View style={styles.barThin}/>
+            <View style={styles.barThick}/><View style={styles.barThin}/><View style={styles.barMed}/><View style={styles.barThin}/><View style={styles.barThick}/>
+          </View>
+          <Text style={styles.idNumber}>{application.cardNumber || 'PENDING'}</Text>
+        </View>
+
+      </Page>
+    </Document>
+  );
+};
 
 export default DigitalCardPDF;
