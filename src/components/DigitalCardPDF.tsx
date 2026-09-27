@@ -138,8 +138,8 @@ export const DigitalCardPDF = ({ application, accentColor = '#D32F2F' }: { appli
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: accentColor }]}>
           <View style={styles.headerTextContainer}>
-            <Text style={styles.title}>WME SECURITY</Text>
-            <Text style={styles.subtitle}>Global Access Credential</Text>
+            <Text style={styles.title}>KEANU REEVES</Text>
+            <Text style={styles.subtitle}>WME // VIP SECURITY CREDENTIAL</Text>
           </View>
           <View style={{ width: 30, height: 30, borderRadius: 15, backgroundColor: accentColor, opacity: 0.8 }} />
         </View>

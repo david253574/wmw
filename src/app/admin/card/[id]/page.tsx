@@ -200,8 +200,8 @@ export default function CardEditorPage() {
             {/* Header */}
             <div className="h-[70px] bg-[#111111] flex flex-row items-center px-5 border-b-[3px]" style={{ borderColor: getAccentColor() }}>
               <div className="flex-1">
-                <h1 className="text-white text-lg font-bold tracking-[2px]">WME SECURITY</h1>
-                <p className="text-[#888888] text-[7px] tracking-[2px] mt-1 uppercase">Global Access Credential</p>
+                <h1 className="text-white text-lg font-bold tracking-[2px]">KEANU REEVES</h1>
+                <p className="text-[#888888] text-[7px] tracking-[2px] mt-1 uppercase">WME // VIP Security Credential</p>
               </div>
               <div className="w-8 h-8 rounded-full opacity-80" style={{ backgroundColor: getAccentColor() }}></div>
             </div>
