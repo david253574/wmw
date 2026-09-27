@@ -3,6 +3,8 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
+export const dynamic = 'force-dynamic';
+
 export async function PATCH(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const params = await context.params;
