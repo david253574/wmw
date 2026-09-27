@@ -141,6 +141,18 @@ const styles = StyleSheet.create({
 type Application = {
   id: string;
   legalName: string;
+  preferredName?: string | null;
+  dob?: string | null;
+  gender?: string | null;
+  nationality?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  idType?: string | null;
+  idNumber?: string | null;
+  emergencyName?: string | null;
+  emergencyRelation?: string | null;
+  emergencyPhone?: string | null;
   fanClubAffiliation: string | null;
   favoriteMovie: string | null;
   accessLevel: string;
@@ -165,16 +177,16 @@ export const AccessCardPDF: React.FC<AccessCardPDFProps> = ({ application }) => 
         <Text style={styles.headerSub}>Keanu Reeves VIP Security Access</Text>
       </View>
 
-      <Text style={styles.title}>Official Record</Text>
+      <Text style={styles.title}>Official Dossier Record</Text>
       
       <View style={styles.row}>
         <View style={styles.col}>
-          <Text style={styles.label}>Applicant Name</Text>
+          <Text style={styles.label}>Applicant Legal Name</Text>
           <Text style={styles.value}>{application.legalName}</Text>
         </View>
         <View style={styles.col}>
-          <Text style={styles.label}>Submission Date</Text>
-          <Text style={styles.value}>{new Date(application.createdAt).toLocaleDateString()}</Text>
+          <Text style={styles.label}>Preferred Name</Text>
+          <Text style={styles.value}>{application.preferredName || 'N/A'}</Text>
         </View>
         <View style={styles.col}>
           <Text style={styles.label}>Reference ID</Text>
@@ -183,6 +195,50 @@ export const AccessCardPDF: React.FC<AccessCardPDFProps> = ({ application }) => 
       </View>
 
       <View style={styles.row}>
+        <View style={styles.col}>
+          <Text style={styles.label}>Date of Birth</Text>
+          <Text style={styles.value}>{application.dob || 'N/A'}</Text>
+        </View>
+        <View style={styles.col}>
+          <Text style={styles.label}>Nationality</Text>
+          <Text style={styles.value}>{application.nationality || 'N/A'}</Text>
+        </View>
+        <View style={styles.col}>
+          <Text style={styles.label}>Gender</Text>
+          <Text style={styles.value}>{application.gender || 'N/A'}</Text>
+        </View>
+      </View>
+
+      <View style={styles.row}>
+        <View style={styles.col}>
+          <Text style={styles.label}>Phone</Text>
+          <Text style={styles.value}>{application.phone || 'N/A'}</Text>
+        </View>
+        <View style={styles.col}>
+          <Text style={styles.label}>Email</Text>
+          <Text style={styles.value}>{application.email || 'N/A'}</Text>
+        </View>
+      </View>
+
+      <View style={styles.row}>
+        <View style={styles.col}>
+          <Text style={styles.label}>Address</Text>
+          <Text style={styles.value}>{application.address || 'N/A'}</Text>
+        </View>
+      </View>
+
+      <View style={styles.row}>
+        <View style={styles.col}>
+          <Text style={styles.label}>Government ID ({application.idType || 'Passport'})</Text>
+          <Text style={styles.value}>{application.idNumber || 'N/A'}</Text>
+        </View>
+        <View style={styles.col}>
+          <Text style={styles.label}>Emergency Contact</Text>
+          <Text style={styles.value}>{application.emergencyName} ({application.emergencyRelation}) - {application.emergencyPhone}</Text>
+        </View>
+      </View>
+
+      <View style={[styles.row, { marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#EEEEEE' }]}>
         <View style={styles.col}>
           <Text style={styles.label}>Fan Affiliation</Text>
           <Text style={styles.value}>{application.fanClubAffiliation || 'Independent'}</Text>
