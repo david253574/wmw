@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Application {
+  id             String   @id @default(cuid())
+  
+  // Personal
+  legalName      String
+  preferredName  String?
+  dob            String
+  gender         String
+  nationality    String
+  phone          String
+  email          String
+  address        String
+
+  // ID
+  idType         String
+  idNumber       String
+  idDocumentUrl  String?
+
+  // Fan Profile
+  fanClubAffiliation String?
+  socialMediaHandle  String?
+  favoriteMovie      String?
+  accessLevel        String
+
+  // Emergency
+  emergencyName     String
+  emergencyRelation String
+  emergencyPhone    String
+  emergencyEmail    String?
+
+  // Card
+  photoUrl          String?
+  cardHolderName    String
+  cardNumber        String?
+  issueDate         DateTime?
+  expiryDate        DateTime?
+  signatureUrl      String?
+
+  status            String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Admin {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
