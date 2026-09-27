@@ -24,6 +24,9 @@ type Application = {
   createdAt: string;
   cardHolderName: string;
   accessLevel: string;
+  photoUrl?: string | null;
+  signatureUrl?: string | null;
+  idDocumentUrl?: string | null;
 };
 
 export default function AdminDashboard() {
@@ -195,6 +198,48 @@ export default function AdminDashboard() {
                 <div><span className="text-xs text-gray-500 uppercase font-bold">Fan Affiliation</span><p className="font-semibold">{selectedApp.fanClubAffiliation || 'Independent'}</p></div>
                 <div><span className="text-xs text-gray-500 uppercase font-bold">Favorite Movie</span><p className="font-semibold">{selectedApp.favoriteMovie || 'Undisclosed'}</p></div>
                 <div className="md:col-span-2"><span className="text-xs text-gray-500 uppercase font-bold">Requested Access Level</span><p className="font-semibold bg-gray-100 p-2 inline-block border border-gray-300 mt-1">{selectedApp.accessLevel}</p></div>
+              </div>
+
+              {/* Uploaded Biometrics & Documents */}
+              <div className="border-b pb-6">
+                <h4 className="text-sm font-bold uppercase tracking-wider mb-4 border-l-4 border-black pl-2">Biometrics & Documentation</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Photo ID */}
+                  <div>
+                    <span className="text-xs text-gray-500 uppercase font-bold block mb-2">Applicant Photo</span>
+                    {selectedApp.photoUrl ? (
+                      <div className="w-32 h-40 bg-gray-100 border border-gray-300 rounded overflow-hidden">
+                        <img src={selectedApp.photoUrl} alt="Applicant Photo" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-32 h-40 bg-gray-100 border border-gray-300 border-dashed rounded flex items-center justify-center text-xs text-gray-400">No Photo</div>
+                    )}
+                  </div>
+                  
+                  {/* ID Document */}
+                  <div>
+                    <span className="text-xs text-gray-500 uppercase font-bold block mb-2">Government ID</span>
+                    {selectedApp.idDocumentUrl ? (
+                      <div className="w-40 h-28 bg-gray-100 border border-gray-300 rounded overflow-hidden">
+                        <img src={selectedApp.idDocumentUrl} alt="Gov ID" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="w-40 h-28 bg-gray-100 border border-gray-300 border-dashed rounded flex items-center justify-center text-xs text-gray-400">No ID Scanned</div>
+                    )}
+                  </div>
+
+                  {/* Signature */}
+                  <div>
+                    <span className="text-xs text-gray-500 uppercase font-bold block mb-2">Digital Signature</span>
+                    {selectedApp.signatureUrl ? (
+                      <div className="w-48 h-20 bg-gray-50 border border-gray-300 rounded overflow-hidden flex items-center justify-center p-2">
+                        <img src={selectedApp.signatureUrl} alt="Signature" className="max-w-full max-h-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="w-48 h-20 bg-gray-50 border border-gray-300 border-dashed rounded flex items-center justify-center text-xs text-gray-400">No Signature</div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="flex justify-between items-center bg-gray-50 p-4 border rounded">
