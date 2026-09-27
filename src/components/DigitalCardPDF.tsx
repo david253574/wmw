@@ -3,47 +3,39 @@ import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/render
 
 const styles = StyleSheet.create({
   page: {
-    flexDirection: 'column',
-    backgroundColor: '#000000',
-    padding: 0,
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    padding: 20,
     fontFamily: 'Helvetica',
     position: 'relative',
   },
   watermark: {
     position: 'absolute',
-    top: 150,
-    left: -20,
-    opacity: 0.1,
-    transform: 'rotate(-45deg)',
-    fontSize: 50,
-    color: '#FFFFFF',
+    top: 120,
+    left: 80,
+    opacity: 0.15,
+    transform: 'rotate(-30deg)',
+    fontSize: 70,
+    color: '#000000',
     fontWeight: 'bold',
+    letterSpacing: 10,
+    zIndex: 10,
   },
-  header: {
-    backgroundColor: '#990000',
-    padding: 15,
+  leftColumn: {
+    width: '35%',
     alignItems: 'center',
-    borderBottom: '4px solid #FFFFFF',
+    justifyContent: 'center',
   },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-    letterSpacing: 2,
-    marginBottom: 2,
-  },
-  headerSub: {
-    color: '#FFFFFF',
-    fontSize: 7,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
+  rightColumn: {
+    width: '65%',
+    paddingLeft: 20,
+    justifyContent: 'center',
   },
   photoContainer: {
-    width: 120,
+    width: 110,
     height: 140,
-    margin: '20px auto 15px auto',
-    border: '3px solid #FFFFFF',
-    backgroundColor: '#333333',
+    backgroundColor: '#F3F4F6',
+    border: '2px solid #E5E7EB',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -52,106 +44,106 @@ const styles = StyleSheet.create({
     height: '100%',
     objectFit: 'cover',
   },
-  detailsBlock: {
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  name: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-    marginBottom: 5,
-  },
-  accessBadge: {
-    backgroundColor: '#FFFFFF',
-    color: '#000000',
-    padding: '4px 10px',
+  orgHeader: {
     fontSize: 10,
     fontWeight: 'bold',
+    color: '#4B5563',
     textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginBottom: 20,
+    borderBottom: '1px solid #E5E7EB',
+    paddingBottom: 5,
+  },
+  name: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  roleDept: {
+    fontSize: 12,
+    color: '#6B7280',
     marginBottom: 15,
+    textTransform: 'uppercase',
   },
-  footerGrid: {
+  grid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    position: 'absolute',
-    bottom: 25,
-    width: '100%',
+    flexWrap: 'wrap',
   },
-  footerBlock: {
-    alignItems: 'center',
+  gridItem: {
+    width: '50%',
+    marginBottom: 10,
   },
-  footerLabel: {
-    color: '#888888',
-    fontSize: 6,
+  label: {
+    fontSize: 7,
+    color: '#9CA3AF',
     textTransform: 'uppercase',
     marginBottom: 2,
   },
-  footerValue: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontFamily: 'Courier-Bold',
+  value: {
+    fontSize: 10,
+    color: '#374151',
+    fontWeight: 'bold',
   },
-  barcodeBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 15,
+  accentBar: {
     position: 'absolute',
-    bottom: 5,
-    width: '100%',
-  },
-  barThin: { width: 1, height: '100%', backgroundColor: '#FFFFFF', marginRight: 1 },
-  barThick: { width: 3, height: '100%', backgroundColor: '#FFFFFF', marginRight: 1 },
-  barMedium: { width: 2, height: '100%', backgroundColor: '#FFFFFF', marginRight: 1 },
+    top: 0,
+    left: 0,
+    width: 8,
+    height: '100%',
+    backgroundColor: '#3B82F6', // Default to corporate blue
+  }
 });
 
-export const DigitalCardPDF = ({ application }: { application: any }) => (
+export const DigitalCardPDF = ({ application, accentColor = '#3B82F6' }: { application: any, accentColor?: string }) => (
   <Document>
-    {/* Standard ID Card Size (CR80 multiplied by 2 for quality): 3.375 x 2.125 inches */}
-    <Page size={[306, 486]} style={styles.page}>
+    {/* Landscape CR80 standard scaled: 486 x 306 */}
+    <Page size={[486, 306]} style={styles.page}>
       
-      <Text style={styles.watermark}>WME</Text>
+      <View style={[styles.accentBar, { backgroundColor: accentColor }]} />
+      <Text style={styles.watermark}>PREVIEW</Text>
       
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>VIP ACCESS</Text>
-        <Text style={styles.headerSub}>Keanu Reeves Security Ops</Text>
-      </View>
-
-      <View style={styles.photoContainer}>
-        {application.photoUrl ? (
-          <Image source={application.photoUrl} style={styles.photo} />
-        ) : (
-          <Text style={{ color: '#666', fontSize: 10 }}>NO PHOTO</Text>
-        )}
-      </View>
-
-      <View style={styles.detailsBlock}>
-        <Text style={styles.name}>{application.cardHolderName || application.legalName}</Text>
-        <Text style={styles.accessBadge}>{application.accessLevel}</Text>
-      </View>
-
-      <View style={styles.footerGrid}>
-        <View style={styles.footerBlock}>
-          <Text style={styles.footerLabel}>Clearance ID</Text>
-          <Text style={styles.footerValue}>{application.cardNumber || 'PENDING'}</Text>
-        </View>
-        <View style={styles.footerBlock}>
-          <Text style={styles.footerLabel}>Valid Thru</Text>
-          <Text style={styles.footerValue}>
-            {application.expiryDate ? new Date(application.expiryDate).toLocaleDateString() : 'N/A'}
-          </Text>
+      <View style={styles.leftColumn}>
+        <View style={styles.photoContainer}>
+          {application.photoUrl ? (
+            <Image source={application.photoUrl} style={styles.photo} />
+          ) : (
+            <Text style={{ color: '#9CA3AF', fontSize: 10 }}>NO PHOTO</Text>
+          )}
         </View>
       </View>
 
-      <View style={styles.barcodeBox}>
-        <View style={styles.barThin} /><View style={styles.barThick} /><View style={styles.barThin} />
-        <View style={styles.barMedium} /><View style={styles.barThin} /><View style={styles.barThick} />
-        <View style={styles.barThin} /><View style={styles.barThick} /><View style={styles.barMedium} />
-        <View style={styles.barThin} /><View style={styles.barThin} /><View style={styles.barThick} />
-        <View style={styles.barThin} /><View style={styles.barThick} />
+      <View style={styles.rightColumn}>
+        <Text style={styles.orgHeader}>Organization Identity Prototype</Text>
+        
+        <Text style={styles.name}>{application.cardHolderName || application.legalName || 'N/A'}</Text>
+        <Text style={styles.roleDept}>
+          {application.role || 'Member'} • {application.department || application.fanClubAffiliation || 'General'}
+        </Text>
+
+        <View style={styles.grid}>
+          <View style={styles.gridItem}>
+            <Text style={styles.label}>Access Category</Text>
+            <Text style={styles.value}>{application.accessLevel || 'N/A'}</Text>
+          </View>
+          <View style={styles.gridItem}>
+            <Text style={styles.label}>Reference No.</Text>
+            <Text style={styles.value}>{application.cardNumber || 'PENDING'}</Text>
+          </View>
+          <View style={styles.gridItem}>
+            <Text style={styles.label}>Issue Date</Text>
+            <Text style={styles.value}>
+              {application.issueDate ? new Date(application.issueDate).toLocaleDateString() : 'N/A'}
+            </Text>
+          </View>
+          <View style={styles.gridItem}>
+            <Text style={styles.label}>Expiration Date</Text>
+            <Text style={styles.value}>
+              {application.expiryDate ? new Date(application.expiryDate).toLocaleDateString() : 'N/A'}
+            </Text>
+          </View>
+        </View>
       </View>
       
     </Page>
