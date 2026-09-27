@@ -479,10 +479,24 @@ export const BlankApplicationPDF = () => (
         </Text>
       </View>
 
-      <View style={{ marginBottom: 30 }}>
+      <View style={{ marginBottom: 15 }}>
         <Text style={{ fontFamily: 'Times-Bold', fontSize: 10, marginBottom: 4 }}>4. SEARCH AND SEIZURE CONSENT</Text>
         <Text style={styles.legalText}>
           By entering the restricted perimeter, Subject consents to physical pat-downs, bag checks, and metal detector screenings at any time. Refusal to submit to a search is grounds for immediate expulsion.
+        </Text>
+      </View>
+
+      <View style={{ marginBottom: 15 }}>
+        <Text style={{ fontFamily: 'Times-Bold', fontSize: 10, marginBottom: 4 }}>5. BIOMETRIC RETENTION & CONTINUOUS EVALUATION</Text>
+        <Text style={styles.legalText}>
+          Subject explicitly consents to the collection, cryptographic hashing, and retention of biometric identifiers (including thumbprints and facial geometry). Subject further consents to continuous background evaluation and open-source intelligence monitoring for the duration of the clearance validity.
+        </Text>
+      </View>
+
+      <View style={{ marginBottom: 20 }}>
+        <Text style={{ fontFamily: 'Times-Bold', fontSize: 10, marginBottom: 4 }}>6. WAIVER OF LIABILITY AND INDEMNIFICATION</Text>
+        <Text style={styles.legalText}>
+          Subject assumes all risks of personal injury, property damage, or wrongful death associated with accessing restricted zones. Subject agrees to indemnify, defend, and hold harmless WME, Keanu Reeves, and all affiliated security contractors from any claims or liabilities arising from their presence within the perimeter.
         </Text>
       </View>
 

@@ -438,7 +438,7 @@ export default function ApplicationForm() {
           
           <div className="bg-gray-50 border border-gray-300 p-6 md:p-8 relative z-10">
             <p className="text-xs text-gray-700 mb-6 leading-relaxed text-justify font-mono">
-              By executing this document, I hereby certify under penalty of perjury (pursuant to WME Security Directive 404.1) that the information provided herein is true, accurate, and complete to the best of my knowledge. I acknowledge that the issued access credentials remain the exclusive property of WME and are subject to immediate revocation without notice. I agree to surrender all credentials upon request or upon the termination of my affiliation with WME. I further consent to standard background verification procedures as required by WME Security Operations. Falsification of any data will result in immediate permanent disqualification.
+              By executing this document, I hereby certify under penalty of perjury (pursuant to WME Security Directive 404.1 and applicable Federal statutes including 18 U.S.C. § 1001) that the information provided herein is true, accurate, and complete to the best of my knowledge. I acknowledge that the issued access credentials remain the exclusive property of WME and are subject to immediate revocation without notice. I agree to surrender all credentials upon request or upon the termination of my affiliation with WME. I further consent to continuous background verification and biometric retention as required by WME Security Operations. Falsification of any data will result in immediate permanent disqualification and potential civil or criminal prosecution.
             </p>
             
             <div className="flex flex-col md:flex-row gap-6">
