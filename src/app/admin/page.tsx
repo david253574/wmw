@@ -114,7 +114,7 @@ export default function AdminDashboard() {
                     </td>
                     <td className="p-4">
                       <div className="flex space-x-2">
-                        <button className="p-1.5 text-gray-600 hover:bg-gray-200 rounded" title="View Details">
+                        <button onClick={() => window.open(`/admin/pdf/${app.id}`, '_blank')} className="p-1.5 text-gray-600 hover:bg-gray-200 rounded" title="View Details">
                           <Eye className="w-4 h-4" />
                         </button>
                         {app.status === 'PENDING' && (
