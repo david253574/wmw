@@ -477,7 +477,30 @@ export default function ApplicationForm() {
           </div>
         </section>
 
-        <div className="pt-8 border-t-4 border-double border-gray-300 mt-12 flex justify-end">
+        {/* Official Use Only Block */}
+        <div className="mt-12 bg-gray-200 p-2 border-4 border-black border-double opacity-80 pointer-events-none grayscale">
+          <div className="bg-white border-2 border-black p-6">
+            <h4 className="text-center font-black tracking-widest uppercase text-xl mb-1">Do Not Fill</h4>
+            <p className="text-center text-[10px] font-bold text-red-700 tracking-widest uppercase mb-6">For WME Adjudication Officer Use Only</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="border-b-2 border-dashed border-gray-400 pb-6 relative">
+                <span className="absolute bottom-1 left-0 text-[10px] uppercase font-bold text-gray-500">Approving Officer ID</span>
+              </div>
+              <div className="border-b-2 border-dashed border-gray-400 pb-6 relative">
+                <span className="absolute bottom-1 left-0 text-[10px] uppercase font-bold text-gray-500">Clearance Status</span>
+              </div>
+              <div className="border-b-2 border-dashed border-gray-400 pb-6 relative">
+                <span className="absolute bottom-1 left-0 text-[10px] uppercase font-bold text-gray-500">Timestamp (UTC)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="pt-8 border-t-4 border-double border-gray-300 mt-12 flex justify-between items-end">
+          <div className="hidden md:block text-[10px] font-mono text-gray-400 uppercase">
+            // END OF DOSSIER // EYES ONLY // WME-SEC
+          </div>
           <button 
             type="submit" 
             disabled={submitting}

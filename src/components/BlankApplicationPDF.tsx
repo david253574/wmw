@@ -519,6 +519,24 @@ export const BlankApplicationPDF = () => (
         </View>
       </View>
 
+      <View style={{ backgroundColor: '#EEE', padding: 4, borderWidth: 2, borderColor: '#000', marginBottom: 20 }}>
+        <View style={{ backgroundColor: '#FFF', borderWidth: 1, borderColor: '#000', padding: 15 }}>
+          <Text style={{ fontFamily: 'Times-Bold', fontSize: 12, textAlign: 'center', textTransform: 'uppercase' }}>DO NOT FILL</Text>
+          <Text style={{ fontFamily: 'Helvetica-Bold', fontSize: 7, color: '#666', textAlign: 'center', marginBottom: 15, textTransform: 'uppercase' }}>For WME Adjudication Officer Use Only</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View style={{ flex: 1, borderBottomWidth: 1, borderStyle: 'dashed', borderColor: '#666', marginRight: 15, paddingBottom: 15 }}>
+              <Text style={{ fontSize: 7, color: '#666', position: 'absolute', bottom: 2 }}>Approving Officer ID</Text>
+            </View>
+            <View style={{ flex: 1, borderBottomWidth: 1, borderStyle: 'dashed', borderColor: '#666', marginRight: 15, paddingBottom: 15 }}>
+              <Text style={{ fontSize: 7, color: '#666', position: 'absolute', bottom: 2 }}>Clearance Status</Text>
+            </View>
+            <View style={{ flex: 1, borderBottomWidth: 1, borderStyle: 'dashed', borderColor: '#666', paddingBottom: 15 }}>
+              <Text style={{ fontSize: 7, color: '#666', position: 'absolute', bottom: 2 }}>Timestamp (UTC)</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+
       {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>LEGAL APPENDIX - DO NOT SEPARATE FROM MAIN APPLICATION</Text>
