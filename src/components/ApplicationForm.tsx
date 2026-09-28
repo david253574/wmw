@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import SignatureCanvas from "react-signature-canvas";
-import { Upload, Camera, FileText, ShieldAlert, BadgeCheck, QrCode, Fingerprint } from "lucide-react";
+import { Upload, Camera, ShieldAlert, Check, X, ChevronRight, ChevronLeft, Edit2 } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const DownloadBlankFormButton = dynamic(
@@ -13,46 +13,42 @@ const DownloadBlankFormButton = dynamic(
   { ssr: false }
 );
 
-// Types and Schema
 const formSchema = z.object({
-  legalName: z.string().min(2, "Legal name is required"),
+  legalName: z.string().min(2, "Required"),
   preferredName: z.string().optional(),
-  dob: z.string().min(1, "Date of birth is required"),
-  gender: z.string().min(1, "Gender is required"),
-  nationality: z.string().min(1, "Nationality is required"),
-  phone: z.string().min(5, "Phone number is required"),
-  email: z.string().email("Invalid email address"),
-  address: z.string().min(5, "Address is required"),
-  
-  idType: z.string().min(1, "ID Type is required"),
-  idNumber: z.string().min(1, "ID Number is required"),
-  idDocument: z.any().optional(),
-  
+  dob: z.string().min(1, "Required"),
+  gender: z.string().min(1, "Required"),
+  nationality: z.string().min(1, "Required"),
+  phone: z.string().min(1, "Required"),
+  email: z.string().email("Invalid email"),
+  address: z.string().min(1, "Required"),
+  idType: z.string().min(1, "Required"),
+  idNumber: z.string().min(1, "Required"),
+  emergencyName: z.string().min(1, "Required"),
+  emergencyRelation: z.string().min(1, "Required"),
+  emergencyPhone: z.string().min(1, "Required"),
   fanClubAffiliation: z.string().optional(),
-  socialMediaHandle: z.string().optional(),
   favoriteMovie: z.string().optional(),
-  accessLevel: z.string().min(1, "Access level is required"),
-  
-  emergencyName: z.string().min(1, "Emergency contact name is required"),
-  emergencyRelation: z.string().min(1, "Relationship is required"),
-  emergencyPhone: z.string().min(5, "Emergency phone is required"),
-  emergencyEmail: z.string().email("Invalid email").optional().or(z.literal("")),
-  
-  photo: z.any().optional(),
-  cardHolderName: z.string().min(2, "Card holder name is required"),
+  accessLevel: z.string().min(1, "Required"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
+const STEPS = ["Personal", "Identity", "Organization", "Emergency", "Review"];
+
 export default function ApplicationForm() {
+  const [currentStep, setCurrentStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  
   const sigCanvas = useRef<SignatureCanvas>(null);
+  const [signatureError, setSignatureError] = useState(false);
   
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
+  const [idDocPreview, setIdDocPreview] = useState<string | null>(null);
+  
+  const { register, handleSubmit, trigger, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       accessLevel: "All-Access VIP Bundle",
@@ -60,51 +56,56 @@ export default function ApplicationForm() {
     }
   });
 
-  const legalName = watch("legalName");
-  
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const formData = watch();
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setPreview: (val: string | null) => void) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
+        setPreview(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleNext = async () => {
+    let fieldsToValidate: any[] = [];
+    if (currentStep === 0) fieldsToValidate = ['legalName', 'preferredName', 'dob', 'gender', 'nationality', 'phone', 'email', 'address'];
+    if (currentStep === 1) fieldsToValidate = ['idType', 'idNumber'];
+    if (currentStep === 2) fieldsToValidate = ['fanClubAffiliation', 'favoriteMovie', 'accessLevel'];
+    if (currentStep === 3) fieldsToValidate = ['emergencyName', 'emergencyRelation', 'emergencyPhone'];
+    
+    const isValid = await trigger(fieldsToValidate);
+    
+    if (isValid) {
+      setCurrentStep(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrev = () => {
+    setCurrentStep(prev => prev - 1);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const onSubmit = async (data: FormValues) => {
+    if (sigCanvas.current?.isEmpty()) {
+      setSignatureError(true);
+      return;
+    }
+    
     setSubmitting(true);
     setError("");
-    
+
     try {
-      const signatureUrl = sigCanvas.current?.isEmpty() 
-        ? null 
-        : sigCanvas.current?.getTrimmedCanvas().toDataURL("image/png");
-
-      if (!signatureUrl) {
-        setError("Please provide a digital signature.");
-        setSubmitting(false);
-        return;
-      }
-
-      let photoDataUrl = photoPreview;
-      let idDocDataUrl = null;
-      
-      const idDocFile = (document.getElementById("idDocument") as HTMLInputElement)?.files?.[0];
-      if (idDocFile) {
-        const reader = new FileReader();
-        idDocDataUrl = await new Promise((resolve) => {
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(idDocFile);
-        });
-      }
+      const signatureUrl = sigCanvas.current?.getTrimmedCanvas().toDataURL('image/png');
 
       const payload = {
         ...data,
         signatureUrl,
-        photoUrl: photoDataUrl,
-        idDocumentUrl: idDocDataUrl,
+        photoUrl: photoPreview,
+        idDocumentUrl: idDocPreview,
       };
 
       const res = await fetch("/api/applications", {
@@ -113,11 +114,10 @@ export default function ApplicationForm() {
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) {
-        throw new Error("Failed to submit application");
-      }
+      if (!res.ok) throw new Error("Failed to submit application");
 
       setSuccess(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch (err: any) {
       setError(err.message || "An error occurred");
     } finally {
@@ -125,391 +125,402 @@ export default function ApplicationForm() {
     }
   };
 
+  const clearSignature = () => {
+    sigCanvas.current?.clear();
+    setSignatureError(false);
+  };
+
   if (success) {
     return (
-      <div className="max-w-3xl mx-auto mt-20 bg-[#faf9f6] border border-gray-300 shadow-xl relative overflow-hidden">
-        <div className="bg-black h-2 w-full"></div>
-        <div className="p-12 text-center">
-          <BadgeCheck className="w-16 h-16 mx-auto mb-6 text-green-700" />
-          <h2 className="text-3xl font-playfair mb-4 text-gray-900">Submission Confirmed</h2>
-          <p className="text-gray-600 mb-8 max-w-md mx-auto">
-            Your secure application has been encrypted and transmitted to the WME Security Operations Center. A designated clearance officer will review your dossier.
+      <div className="max-w-2xl mx-auto p-4 md:p-8 font-inter mt-10">
+        <div className="bg-black text-white p-8 md:p-12 text-center border-4 border-double border-gray-700 shadow-2xl relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 pointer-events-none"></div>
+          <ShieldAlert className="w-20 h-20 mx-auto text-green-500 mb-6" />
+          <h2 className="text-3xl font-black uppercase tracking-widest mb-4">Transmission Secure</h2>
+          <p className="text-gray-400 font-mono text-sm leading-relaxed mb-8">
+            Dossier encrypted and transmitted to WME Security Operations. 
+            Await further instructions. Your unique tracking hash has been logged.
           </p>
-          <div className="bg-gray-100 border border-gray-200 p-4 mb-8 text-sm font-mono text-gray-500">
-            TRANSACTION ID: WME-{Date.now().toString().slice(-8)}
+          <div className="text-xs text-gray-500 font-mono border-t border-gray-800 pt-8 mt-4">
+            STATUS: <span className="text-green-500">PENDING ADJUDICATION</span><br/>
+            CLEARANCE: <span className="text-yellow-500">LEVEL 4 REQ</span>
           </div>
-          <button 
-            onClick={() => window.location.reload()}
-            className="bg-black text-white px-8 py-3 uppercase tracking-widest text-xs font-semibold hover:bg-gray-800 transition-colors"
-          >
-            Return to Portal
-          </button>
         </div>
       </div>
     );
   }
 
-  const InputWrapper = ({ label, error, children, required = true }: any) => (
-    <div className="mb-4">
-      <label className="block text-xs font-bold text-gray-800 uppercase tracking-wide mb-1">
-        {label} {required && <span className="text-red-600">*</span>}
-      </label>
-      {children}
-      {error && <span className="text-red-600 text-xs mt-1 block font-medium">{error}</span>}
-    </div>
-  );
+  const inputClasses = "w-full p-3 md:p-4 border-2 border-gray-300 bg-gray-50 focus:bg-white focus:ring-0 focus:border-black font-medium transition-colors text-sm md:text-base rounded-none outline-none";
+  const labelClasses = "block text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 mb-2";
+  const errorClasses = "text-red-500 text-xs font-bold mt-1 uppercase";
 
   return (
-    <div className="max-w-4xl mx-auto bg-[#fdfbf7] border border-gray-300 shadow-2xl mb-20 relative font-inter overflow-hidden">
+    <div className="min-h-screen bg-gray-100 py-6 md:py-12 px-4 font-inter relative overflow-x-hidden">
       {/* Background Watermark */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-[0.03] overflow-hidden z-0">
-        <span className="text-[120px] md:text-[200px] font-black tracking-widest transform -rotate-45 whitespace-nowrap">STRICTLY CONFIDENTIAL</span>
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.03] overflow-hidden">
+        <span className="text-[100px] md:text-[200px] font-black tracking-widest transform -rotate-45 whitespace-nowrap">CLASSIFIED</span>
       </div>
 
-      {/* Official Top Bar */}
-      <div className="bg-black text-white px-8 py-2 flex justify-between items-center text-xs tracking-widest font-mono uppercase relative z-10">
-        <span className="flex items-center gap-2"><ShieldAlert className="w-4 h-4 text-red-500" /> STRICTLY CONFIDENTIAL</span>
-        <span>FORM ID: WME-SEC-0042 | REV: 2026.1</span>
-      </div>
+      <div className="max-w-4xl mx-auto bg-white shadow-2xl relative z-10 border border-gray-200">
+        {/* Header */}
+        <header className="bg-black text-white p-6 md:p-10 flex flex-col items-center text-center relative border-b-4 border-red-700">
+          <ShieldAlert className="w-10 h-10 md:w-12 md:h-12 mb-4 text-gray-300" />
+          <h1 className="text-2xl md:text-4xl font-black tracking-[0.2em] uppercase mb-2">WME Security</h1>
+          <p className="text-[#888888] text-[8px] md:text-[10px] uppercase tracking-[0.3em] font-bold">Background Check & Credentialing Form</p>
+        </header>
 
-      <div className="px-8 py-10 md:px-16 md:py-14 border-b-4 border-double border-gray-300 relative z-10">
-        <div className="absolute top-10 right-8 md:right-16 text-right flex flex-col items-end">
-          <div className="inline-block border-2 border-red-700 text-red-700 px-3 py-1 font-bold tracking-widest uppercase transform rotate-6 opacity-80 text-xl font-playfair mb-4 bg-white/50 backdrop-blur-sm">
-            OFFICIAL USE
-          </div>
-          <div className="flex flex-col items-center opacity-80">
-            <QrCode className="w-10 h-10 text-gray-800 mb-1" />
-            <span className="text-[8px] font-mono tracking-widest text-gray-800 font-bold">AUTH-CODE</span>
+        {/* Progress Tracker - Mobile Optimized */}
+        <div className="bg-gray-100 border-b border-gray-200 px-4 py-4 md:px-8 overflow-x-auto no-scrollbar">
+          <div className="flex justify-between items-center min-w-[300px]">
+            {STEPS.map((step, index) => (
+              <div key={index} className="flex flex-col items-center flex-1 relative">
+                <div className={`w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold z-10 transition-colors duration-300 ${
+                  index < currentStep ? 'bg-black text-white' : 
+                  index === currentStep ? 'bg-red-700 text-white ring-4 ring-red-100' : 
+                  'bg-gray-300 text-gray-500'
+                }`}>
+                  {index < currentStep ? <Check className="w-3 h-3 md:w-4 md:h-4" /> : index + 1}
+                </div>
+                <span className={`text-[8px] md:text-[10px] font-bold uppercase tracking-wider mt-2 text-center absolute top-8 md:top-10 w-20 md:w-24 -ml-10 md:-ml-12 left-1/2 ${
+                  index <= currentStep ? 'text-black' : 'text-gray-400'
+                }`}>
+                  {step}
+                </span>
+                {/* Connecting Lines */}
+                {index < STEPS.length - 1 && (
+                  <div className={`absolute top-3 md:top-4 left-1/2 w-full h-[2px] -z-0 ${
+                    index < currentStep ? 'bg-black' : 'bg-gray-300'
+                  }`} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
-        <h1 className="text-5xl font-playfair tracking-tight mb-2 font-black text-black">WME</h1>
-        <h2 className="text-lg tracking-widest uppercase font-semibold text-gray-600">Keanu Reeves • VIP Security & Access Control</h2>
-        <div className="w-24 h-1 bg-red-700 mt-6"></div>
-      </div>
-      
-      <div className="bg-gray-100 border-b border-gray-300 p-3 px-8 md:px-16 flex justify-between items-center">
-        <span className="text-sm font-semibold text-gray-600">APPLICATION DOSSIER</span>
-        <DownloadBlankFormButton />
-      </div>
-      
-      <form onSubmit={handleSubmit(onSubmit)} className="p-8 md:p-16">
+
+        {/* Error Banner */}
         {error && (
-          <div className="bg-red-50 text-red-900 p-4 mb-8 border-l-4 border-red-700 font-medium text-sm">
-            ERROR: {error}
+          <div className="bg-red-50 text-red-700 p-4 border-l-4 border-red-700 text-sm font-bold mx-6 mt-6 uppercase flex items-center gap-2">
+            <X className="w-4 h-4 shrink-0" />
+            <p>{error}</p>
           </div>
         )}
 
-        <p className="text-sm text-gray-500 mb-12 border-l-2 border-gray-300 pl-4 italic">
-          Instructions: Complete all fields in this document accurately. Any falsification of information will result in immediate termination of clearance processing.
-        </p>
-
-        {/* Section 1 */}
-        <section className="mb-14">
-          <div className="flex items-center gap-4 mb-8">
-            <span className="bg-black text-white w-8 h-8 flex items-center justify-center font-bold text-lg font-playfair">I</span>
-            <h3 className="text-2xl font-playfair font-bold text-black border-b border-gray-300 pb-1 flex-1">
-              Personal Identification
-            </h3>
-          </div>
+        {/* FORM CONTENT */}
+        <div className="p-6 md:p-12 pb-24 md:pb-32">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
-            <InputWrapper label="Full Legal Name" error={errors.legalName?.message}>
-              <input {...register("legalName")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg" placeholder="As it appears on government ID" />
-            </InputWrapper>
-            <InputWrapper label="Preferred Name" required={false}>
-              <input {...register("preferredName")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg" />
-            </InputWrapper>
+          {/* STEP 1: PERSONAL INFO */}
+          <div className={currentStep === 0 ? "block" : "hidden"}>
+            <h3 className="text-xl md:text-2xl font-black uppercase tracking-widest border-b-2 border-black pb-3 mb-8">1. Personal Identity</h3>
             
-            <InputWrapper label="Date of Birth" error={errors.dob?.message}>
-              <input type="date" {...register("dob")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg" />
-            </InputWrapper>
-            <InputWrapper label="Gender" error={errors.gender?.message}>
-              <select {...register("gender")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg appearance-none rounded-none">
-                <option value="">Select Option...</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Non-binary">Non-binary</option>
-                <option value="Prefer not to say">Prefer not to say</option>
-              </select>
-            </InputWrapper>
-            
-            <InputWrapper label="Nationality" error={errors.nationality?.message}>
-              <input {...register("nationality")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg" />
-            </InputWrapper>
-            <InputWrapper label="Primary Phone" error={errors.phone?.message}>
-              <input {...register("phone")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg" />
-            </InputWrapper>
-            
-            <div className="md:col-span-2">
-              <InputWrapper label="Official Email Address" error={errors.email?.message}>
-                <input type="email" {...register("email")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg" />
-              </InputWrapper>
-            </div>
-            
-            <div className="md:col-span-2">
-              <InputWrapper label="Current Residential Address" error={errors.address?.message}>
-                <textarea {...register("address")} rows={2} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg resize-none"></textarea>
-              </InputWrapper>
-            </div>
-          </div>
-        </section>
-
-        {/* Section 2 */}
-        <section className="mb-14">
-          <div className="flex items-center gap-4 mb-8">
-            <span className="bg-black text-white w-8 h-8 flex items-center justify-center font-bold text-lg font-playfair">II</span>
-            <h3 className="text-2xl font-playfair font-bold text-black border-b border-gray-300 pb-1 flex-1">
-              Government Verification
-            </h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-            <div>
-              <label className="block text-xs font-bold text-gray-800 uppercase tracking-wide mb-3">ID Document Type *</label>
-              <div className="space-y-2 bg-gray-50 p-4 border border-gray-200">
-                {["Passport", "National ID", "Driver's License", "Other"].map(type => (
-                  <label key={type} className="flex items-center space-x-3 cursor-pointer">
-                    <input type="radio" value={type} {...register("idType")} className="w-4 h-4 text-black focus:ring-black border-gray-300" />
-                    <span className="font-medium">{type}</span>
-                  </label>
-                ))}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+              <div className="md:col-span-2">
+                <label className={labelClasses}>Full Legal Name *</label>
+                <input type="text" {...register("legalName")} className={inputClasses} placeholder="As it appears on Gov ID" />
+                {errors.legalName && <p className={errorClasses}>{errors.legalName.message}</p>}
               </div>
-              {errors.idType && <span className="text-red-600 text-xs mt-1 block font-medium">{errors.idType.message}</span>}
+
+              <div>
+                <label className={labelClasses}>Preferred Name / Alias</label>
+                <input type="text" {...register("preferredName")} className={inputClasses} />
+              </div>
+
+              <div>
+                <label className={labelClasses}>Date of Birth *</label>
+                <input type="date" {...register("dob")} className={inputClasses} />
+                {errors.dob && <p className={errorClasses}>{errors.dob.message}</p>}
+              </div>
+
+              <div>
+                <label className={labelClasses}>Gender *</label>
+                <select {...register("gender")} className={inputClasses}>
+                  <option value="">SELECT...</option>
+                  <option value="Male">MALE</option>
+                  <option value="Female">FEMALE</option>
+                  <option value="Non-binary">NON-BINARY</option>
+                  <option value="Prefer not to say">UNDISCLOSED</option>
+                </select>
+                {errors.gender && <p className={errorClasses}>{errors.gender.message}</p>}
+              </div>
+
+              <div>
+                <label className={labelClasses}>Nationality *</label>
+                <input type="text" {...register("nationality")} className={inputClasses} />
+                {errors.nationality && <p className={errorClasses}>{errors.nationality.message}</p>}
+              </div>
+
+              <div>
+                <label className={labelClasses}>Primary Phone *</label>
+                <input type="tel" {...register("phone")} className={inputClasses} placeholder="+1 (555) 000-0000" />
+                {errors.phone && <p className={errorClasses}>{errors.phone.message}</p>}
+              </div>
+
+              <div>
+                <label className={labelClasses}>Secure Email *</label>
+                <input type="email" {...register("email")} className={inputClasses} placeholder="agent@domain.com" />
+                {errors.email && <p className={errorClasses}>{errors.email.message}</p>}
+              </div>
+
+              <div className="md:col-span-2">
+                <label className={labelClasses}>Current Physical Address *</label>
+                <textarea {...register("address")} rows={3} className={inputClasses} placeholder="Full street address, city, postal code, country" />
+                {errors.address && <p className={errorClasses}>{errors.address.message}</p>}
+              </div>
             </div>
+          </div>
+
+          {/* STEP 2: IDENTIFICATION */}
+          <div className={currentStep === 1 ? "block" : "hidden"}>
+            <h3 className="text-xl md:text-2xl font-black uppercase tracking-widest border-b-2 border-black pb-3 mb-8">2. Verification Documents</h3>
             
-            <div className="flex flex-col gap-6">
-              <InputWrapper label="Document ID Number" error={errors.idNumber?.message}>
-                <input {...register("idNumber")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg font-mono tracking-wider" />
-              </InputWrapper>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-10">
+              <div>
+                <label className={labelClasses}>Government ID Type *</label>
+                <select {...register("idType")} className={inputClasses}>
+                  <option value="Passport">PASSPORT</option>
+                  <option value="Drivers License">DRIVER'S LICENSE</option>
+                  <option value="National ID">NATIONAL ID CARD</option>
+                </select>
+                {errors.idType && <p className={errorClasses}>{errors.idType.message}</p>}
+              </div>
               
               <div>
-                <label className="block text-xs font-bold text-gray-800 uppercase tracking-wide mb-2">Secure Upload (Scan/Photo) *</label>
-                <div className="border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100 p-6 flex flex-col items-center justify-center cursor-pointer relative transition-colors">
-                  <input id="idDocument" type="file" className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="image/*,.pdf" />
-                  <Upload className="h-6 w-6 text-gray-400 mb-2" />
-                  <span className="text-xs font-semibold text-gray-600">ATTACH DOCUMENT</span>
-                </div>
+                <label className={labelClasses}>ID Number *</label>
+                <input type="text" {...register("idNumber")} className={inputClasses} />
+                {errors.idNumber && <p className={errorClasses}>{errors.idNumber.message}</p>}
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* Section 3 */}
-        <section className="mb-14">
-          <div className="flex items-center gap-4 mb-8">
-            <span className="bg-black text-white w-8 h-8 flex items-center justify-center font-bold text-lg font-playfair">III</span>
-            <h3 className="text-2xl font-playfair font-bold text-black border-b border-gray-300 pb-1 flex-1">
-              Fan Profile & Access Request
-            </h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-            <InputWrapper label="Fan Club Affiliation (if any)" required={false}>
-              <input {...register("fanClubAffiliation")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg" placeholder="e.g. KR Global Fans" />
-            </InputWrapper>
-            <InputWrapper label="Social Media Handle" required={false}>
-              <input {...register("socialMediaHandle")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg" placeholder="e.g. @keanufan1" />
-            </InputWrapper>
-            
-            <div className="md:col-span-2">
-              <InputWrapper label="Favorite Keanu Reeves Movie" required={false}>
-                <input {...register("favoriteMovie")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors text-lg" placeholder="e.g. The Matrix, John Wick" />
-              </InputWrapper>
-            </div>
-            
-            <div className="md:col-span-2 mt-4">
-              <label className="block text-xs font-bold text-gray-800 uppercase tracking-wide mb-3">VIP Package & Clearance Level *</label>
-              <div className="grid grid-cols-1 gap-3">
-                <label className="relative border-2 border-gray-200 p-5 cursor-pointer hover:border-black transition-colors bg-white flex flex-col group has-[:checked]:border-black has-[:checked]:bg-gray-50">
-                  <input type="radio" value="All-Access VIP Bundle" {...register("accessLevel")} className="absolute right-5 top-5 w-5 h-5 text-black focus:ring-black" />
-                  
-                  <div className="flex items-center gap-3 mb-3 pr-8">
-                    <span className="font-bold text-lg">All-Access VIP Bundle</span>
-                    <span className="bg-red-100 text-red-800 text-[10px] font-bold px-2 py-1 rounded border border-red-200">BUNDLE DISCOUNT</span>
-                  </div>
-                  
-                  <div className="mb-4 bg-gray-50 p-4 border border-gray-200">
-                    <div className="text-xs font-bold text-gray-800 uppercase tracking-wider mb-2">Package Includes:</div>
-                    <ul className="space-y-2">
-                      <li className="flex justify-between items-center text-sm border-b border-gray-200 pb-1">
-                        <div><span className="font-semibold text-gray-800">Perimeter</span> <span className="text-gray-500 text-xs ml-1">(General Set/Event)</span></div>
-                        <span className="text-gray-400 line-through font-mono text-xs">$250</span>
-                      </li>
-                      <li className="flex justify-between items-center text-sm border-b border-gray-200 pb-1">
-                        <div><span className="font-semibold text-gray-800">Basecamp</span> <span className="text-gray-500 text-xs ml-1">(Trailers & Crew)</span></div>
-                        <span className="text-gray-400 line-through font-mono text-xs">$800</span>
-                      </li>
-                      <li className="flex justify-between items-center text-sm border-b border-gray-200 pb-1">
-                        <div><span className="font-semibold text-gray-800">Inner Circle</span> <span className="text-gray-500 text-xs ml-1">(Direct Proximity)</span></div>
-                        <span className="text-gray-400 line-through font-mono text-xs">$2,500</span>
-                      </li>
-                      <li className="flex justify-between items-center text-sm">
-                        <div><span className="font-semibold text-gray-800">Meet & Greet</span> <span className="text-gray-500 text-xs ml-1">(Approved Interaction)</span></div>
-                        <span className="text-gray-400 line-through font-mono text-xs">$5,000</span>
-                      </li>
-                    </ul>
-                  </div>
-                  
-                  <div className="mt-auto flex items-end justify-between border-t border-gray-200 pt-3">
-                    <div className="flex flex-col">
-                      <span className="text-xs text-gray-500 font-bold uppercase tracking-wider">Total Amount Due</span>
-                      <span className="text-xs text-gray-400 line-through font-mono">$8,550 Value</span>
-                    </div>
-                    <span className="font-mono text-3xl font-black text-red-700">$3,000</span>
-                  </div>
-                </label>
-              </div>
-              {errors.accessLevel && <span className="text-red-600 text-xs mt-2 block font-medium">{errors.accessLevel.message}</span>}
-            </div>
-          </div>
-        </section>
-
-        {/* Section 4 & 5 Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 mb-14">
-          {/* Section 4 */}
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <span className="bg-black text-white w-6 h-6 flex items-center justify-center font-bold text-sm font-playfair">IV</span>
-              <h3 className="text-xl font-playfair font-bold text-black border-b border-gray-300 pb-1 flex-1">
-                Emergency Contact
-              </h3>
-            </div>
-            <div className="space-y-4">
-              <InputWrapper label="Contact Name" error={errors.emergencyName?.message}>
-                <input {...register("emergencyName")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors" />
-              </InputWrapper>
-              <InputWrapper label="Relationship" error={errors.emergencyRelation?.message}>
-                <input {...register("emergencyRelation")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors" />
-              </InputWrapper>
-              <InputWrapper label="Contact Phone" error={errors.emergencyPhone?.message}>
-                <input {...register("emergencyPhone")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors" />
-              </InputWrapper>
-              <InputWrapper label="Contact Email" required={false}>
-                <input type="email" {...register("emergencyEmail")} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors" />
-              </InputWrapper>
-            </div>
-          </section>
-
-          {/* Section 5 */}
-          <section>
-            <div className="flex items-center gap-3 mb-6">
-              <span className="bg-black text-white w-6 h-6 flex items-center justify-center font-bold text-sm font-playfair">V</span>
-              <h3 className="text-xl font-playfair font-bold text-black border-b border-gray-300 pb-1 flex-1">
-                Badge Data
-              </h3>
-            </div>
-            
-            <div className="bg-white border border-gray-300 p-6 shadow-inner">
-              <div className="flex gap-6 items-start">
-                <div className="w-32 h-40 bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center relative overflow-hidden group cursor-pointer shrink-0">
-                  <input type="file" onChange={handlePhotoChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" accept="image/*" />
-                  {photoPreview ? (
-                    <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="text-center p-2">
-                      <Camera className="mx-auto h-6 w-6 text-gray-400 mb-1" />
-                      <span className="text-[10px] font-bold text-gray-500 uppercase">Required<br/>Headshot</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/50 hidden group-hover:flex items-center justify-center text-white text-xs font-bold">REPLACE</div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Photo Upload */}
+              <div className="border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center text-center bg-gray-50 relative group">
+                <label className={labelClasses}>Applicant Photograph</label>
+                <p className="text-[10px] text-gray-400 mb-4">Clear, front-facing headshot on solid background.</p>
                 
-                <div className="flex-1 space-y-4">
-                  <InputWrapper label="Badge Display Name" error={errors.cardHolderName?.message}>
-                    <input {...register("cardHolderName")} defaultValue={legalName} className="w-full border-b-2 border-gray-300 bg-transparent py-2 focus:border-black focus:outline-none transition-colors font-bold uppercase" placeholder="e.g. JOHN D." />
-                  </InputWrapper>
-                  <div className="p-3 bg-gray-50 border border-gray-200 text-xs text-gray-600">
-                    Photo must be recent, forward-facing, on a neutral background, with no hats or sunglasses.
+                {photoPreview ? (
+                  <div className="relative w-32 h-40 bg-gray-200 border-2 border-black shadow-lg">
+                    <img src={photoPreview} className="w-full h-full object-cover" alt="Preview" />
+                    <button type="button" onClick={() => setPhotoPreview(null)} className="absolute -top-3 -right-3 bg-red-600 text-white rounded-full p-1 shadow-lg hover:bg-red-700">
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
+                ) : (
+                  <label className="cursor-pointer flex flex-col items-center justify-center w-full h-40 bg-white border-2 border-gray-200 hover:border-black transition group-hover:bg-gray-100">
+                    <Camera className="w-8 h-8 text-gray-400 mb-2" />
+                    <span className="text-xs font-bold uppercase">Select Photo</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, setPhotoPreview)} />
+                  </label>
+                )}
+              </div>
+
+              {/* ID Document Upload */}
+              <div className="border-2 border-dashed border-gray-300 p-6 flex flex-col items-center justify-center text-center bg-gray-50 relative group">
+                <label className={labelClasses}>Scan of Government ID</label>
+                <p className="text-[10px] text-gray-400 mb-4">High-resolution scan of selected ID document.</p>
+                
+                {idDocPreview ? (
+                  <div className="relative w-full max-w-[200px] h-32 bg-gray-200 border-2 border-black shadow-lg">
+                    <img src={idDocPreview} className="w-full h-full object-cover" alt="ID Preview" />
+                    <button type="button" onClick={() => setIdDocPreview(null)} className="absolute -top-3 -right-3 bg-red-600 text-white rounded-full p-1 shadow-lg hover:bg-red-700">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex flex-col items-center justify-center w-full h-32 bg-white border-2 border-gray-200 hover:border-black transition group-hover:bg-gray-100">
+                    <Upload className="w-8 h-8 text-gray-400 mb-2" />
+                    <span className="text-xs font-bold uppercase">Select Document</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(e, setIdDocPreview)} />
+                  </label>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* STEP 3: ORGANIZATION */}
+          <div className={currentStep === 2 ? "block" : "hidden"}>
+            <h3 className="text-xl md:text-2xl font-black uppercase tracking-widest border-b-2 border-black pb-3 mb-8">3. Authorization Parameters</h3>
+            
+            <div className="grid grid-cols-1 gap-6 md:gap-8">
+              <div>
+                <label className={labelClasses}>Requested Access Package *</label>
+                <div className="bg-white border-2 border-gray-300 relative cursor-pointer hover:border-black transition overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-red-700 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-widest shadow-sm z-10">SELECTED</div>
+                  <label className="flex items-start p-4 md:p-6 cursor-pointer relative z-0">
+                    <input type="radio" value="All-Access VIP Bundle" {...register("accessLevel")} className="w-5 h-5 text-black focus:ring-black mt-1 shrink-0" defaultChecked />
+                    <div className="ml-4">
+                      <div className="flex flex-wrap items-baseline gap-2 md:gap-3 mb-2">
+                        <span className="font-black text-lg md:text-xl uppercase tracking-widest text-black">All-Access VIP Bundle</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-gray-400 line-through text-sm font-mono">$8,550</span>
+                          <span className="bg-black text-white text-xs font-bold px-2 py-1 rounded">$3,000 USD</span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-3 uppercase tracking-wider font-bold">Comprehensive Clearance Authorization</p>
+                      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs font-mono text-gray-500 bg-gray-50 p-4 border border-gray-200">
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-600 shrink-0"/> Perimeter Access (Zone 1)</li>
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-600 shrink-0"/> Basecamp & Catering (Zone 2)</li>
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-600 shrink-0"/> Inner Circle / VIP Tent (Zone 3)</li>
+                        <li className="flex items-center gap-2"><Check className="w-3 h-3 text-green-600 shrink-0"/> Direct Meet & Greet (Priority)</li>
+                      </ul>
+                    </div>
+                  </label>
+                </div>
+                {errors.accessLevel && <p className={errorClasses}>{errors.accessLevel.message}</p>}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <div>
+                  <label className={labelClasses}>Fan Club Affiliation</label>
+                  <input type="text" {...register("fanClubAffiliation")} className={inputClasses} placeholder="If applicable" />
+                </div>
+                <div>
+                  <label className={labelClasses}>Favorite KR Work</label>
+                  <input type="text" {...register("favoriteMovie")} className={inputClasses} placeholder="Security question basis" />
                 </div>
               </div>
             </div>
-          </section>
-        </div>
-
-        {/* Section 6 */}
-        <section className="mb-8">
-          <div className="flex items-center gap-4 mb-6">
-            <span className="bg-black text-white w-8 h-8 flex items-center justify-center font-bold text-lg font-playfair">VI</span>
-            <h3 className="text-2xl font-playfair font-bold text-black border-b border-gray-300 pb-1 flex-1">
-              Attestation & Authorization
-            </h3>
           </div>
-          
-          <div className="bg-gray-50 border border-gray-300 p-6 md:p-8 relative z-10">
-            <p className="text-xs text-gray-700 mb-6 leading-relaxed text-justify font-mono">
-              By executing this document, I hereby certify under penalty of perjury (pursuant to WME Security Directive 404.1 and applicable Federal statutes including 18 U.S.C. § 1001) that the information provided herein is true, accurate, and complete to the best of my knowledge. I acknowledge that the issued access credentials remain the exclusive property of WME and are subject to immediate revocation without notice. I agree to surrender all credentials upon request or upon the termination of my affiliation with WME. I further consent to continuous background verification and biometric retention as required by WME Security Operations. Falsification of any data will result in immediate permanent disqualification and potential civil or criminal prosecution.
-            </p>
+
+          {/* STEP 4: EMERGENCY CONTACT */}
+          <div className={currentStep === 3 ? "block" : "hidden"}>
+            <h3 className="text-xl md:text-2xl font-black uppercase tracking-widest border-b-2 border-black pb-3 mb-8">4. Emergency Designation</h3>
             
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="flex-1">
-                <div className="bg-white border-2 border-gray-300 relative">
-                  <div className="absolute top-2 left-4 text-[10px] uppercase font-bold tracking-widest text-gray-400 pointer-events-none">Sign Here x</div>
-                  <SignatureCanvas 
-                    ref={sigCanvas}
-                    penColor="#000080"
-                    canvasProps={{className: "w-full h-40 cursor-crosshair"}} 
-                  />
-                </div>
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-[10px] text-gray-500 uppercase tracking-widest">Digital Signature Capture Area</span>
-                  <button 
-                    type="button" 
-                    onClick={() => sigCanvas.current?.clear()}
-                    className="text-xs font-bold text-red-600 hover:text-red-800 uppercase"
-                  >
-                    Clear Signature
-                  </button>
-                </div>
+            <div className="bg-yellow-50 border border-yellow-200 p-4 mb-8 text-xs font-mono text-yellow-800 uppercase leading-relaxed">
+              <strong>Notice:</strong> In the event of a security incident or medical emergency, the following individual will be contacted immediately.
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 md:gap-8">
+              <div>
+                <label className={labelClasses}>Contact Full Name *</label>
+                <input type="text" {...register("emergencyName")} className={inputClasses} />
+                {errors.emergencyName && <p className={errorClasses}>{errors.emergencyName.message}</p>}
               </div>
               
-              <div className="w-full md:w-48 shrink-0">
-                <div className="bg-white border-2 border-dashed border-gray-300 h-40 flex flex-col items-center justify-center text-gray-400 relative group cursor-not-allowed">
-                  <Fingerprint className="w-16 h-16 mb-2 opacity-50" />
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-center px-4">Biometric Scan<br/>(In-Person Only)</span>
-                  <div className="absolute inset-0 bg-gray-50/50 hidden group-hover:flex items-center justify-center">
-                    <span className="text-[10px] font-bold text-red-700 bg-white px-2 py-1 border border-red-700">WME AGENT VERIFIED</span>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                <div>
+                  <label className={labelClasses}>Relationship *</label>
+                  <input type="text" {...register("emergencyRelation")} className={inputClasses} placeholder="e.g. Spouse, Sibling" />
+                  {errors.emergencyRelation && <p className={errorClasses}>{errors.emergencyRelation.message}</p>}
+                </div>
+                <div>
+                  <label className={labelClasses}>Emergency Phone *</label>
+                  <input type="tel" {...register("emergencyPhone")} className={inputClasses} />
+                  {errors.emergencyPhone && <p className={errorClasses}>{errors.emergencyPhone.message}</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* STEP 5: REVIEW & SIGN */}
+          <div className={currentStep === 4 ? "block" : "hidden"}>
+            <h3 className="text-xl md:text-2xl font-black uppercase tracking-widest border-b-2 border-black pb-3 mb-6 flex justify-between items-end">
+              <span>5. Final Adjudication</span>
+              <button type="button" onClick={() => setCurrentStep(0)} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 normal-case font-bold"><Edit2 className="w-3 h-3"/> Edit All</button>
+            </h3>
+            
+            {/* Mobile-Friendly Summary Box */}
+            <div className="bg-gray-50 border border-gray-300 p-4 md:p-6 mb-8 text-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+                <div>
+                  <span className="block text-[10px] text-gray-500 uppercase font-bold">Applicant</span>
+                  <p className="font-mono font-bold uppercase truncate">{formData.legalName}</p>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-gray-500 uppercase font-bold">Clearance Level</span>
+                  <p className="font-mono font-bold text-red-700 uppercase truncate">{formData.accessLevel}</p>
+                </div>
+                <div>
+                  <span className="block text-[10px] text-gray-500 uppercase font-bold">Gov ID</span>
+                  <p className="font-mono uppercase truncate">{formData.idType} - {formData.idNumber}</p>
+                </div>
+                <div className="flex gap-4 items-center pt-2">
+                  <div className="w-12 h-12 bg-gray-200 border border-gray-400 overflow-hidden shrink-0">
+                    {photoPreview ? <img src={photoPreview} className="w-full h-full object-cover"/> : <span className="text-[8px] text-center p-2 text-gray-400 block">NO PHOTO</span>}
+                  </div>
+                  <div className="w-16 h-12 bg-gray-200 border border-gray-400 overflow-hidden shrink-0">
+                    {idDocPreview ? <img src={idDocPreview} className="w-full h-full object-cover"/> : <span className="text-[8px] text-center p-2 text-gray-400 block">NO ID DOC</span>}
                   </div>
                 </div>
-                <span className="text-[10px] text-gray-500 uppercase tracking-widest mt-2 block text-center">Thumbprint Box</span>
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* Official Use Only Block */}
-        <div className="mt-12 bg-gray-200 p-2 border-4 border-black border-double opacity-80 pointer-events-none grayscale">
-          <div className="bg-white border-2 border-black p-6">
-            <h4 className="text-center font-black tracking-widest uppercase text-xl mb-1">Do Not Fill</h4>
-            <p className="text-center text-[10px] font-bold text-red-700 tracking-widest uppercase mb-6">For WME Adjudication Officer Use Only</p>
+            {/* Legal Attestation */}
+            <div className="bg-white border-2 border-gray-300 p-5 md:p-8 relative mb-8">
+              <p className="text-[10px] md:text-xs text-gray-700 leading-loose text-justify font-mono">
+                By executing this document, I hereby certify under penalty of perjury (pursuant to WME Security Directive 404.1 and applicable Federal statutes including 18 U.S.C. § 1001) that the information provided herein is true, accurate, and complete to the best of my knowledge. I acknowledge that the issued access credentials remain the exclusive property of WME and are subject to immediate revocation without notice. I agree to surrender all credentials upon request or upon the termination of my affiliation with WME. I further consent to continuous background verification and biometric retention as required by WME Security Operations. Falsification of any data will result in immediate permanent disqualification and potential civil or criminal prosecution.
+              </p>
+            </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="border-b-2 border-dashed border-gray-400 pb-6 relative">
-                <span className="absolute bottom-1 left-0 text-[10px] uppercase font-bold text-gray-500">Approving Officer ID</span>
+            {/* Signature Area - Strictly Responsive */}
+            <div className="mb-8">
+              <label className="block text-xs font-black uppercase tracking-widest text-black mb-3 border-l-4 border-red-700 pl-3">Electronic Signature Required</label>
+              <div className={`bg-white border-2 relative overflow-hidden rounded ${signatureError ? 'border-red-500 ring-2 ring-red-200' : 'border-gray-300'}`}>
+                <div className="absolute top-2 left-4 text-[10px] uppercase font-bold tracking-widest text-gray-400 pointer-events-none z-10">Sign Here x</div>
+                {/* The wrapping div ensures the canvas conforms to 100% width on mobile */}
+                <div className="w-full h-48 sm:h-56 bg-gray-50/50">
+                  <SignatureCanvas 
+                    ref={sigCanvas}
+                    penColor="#000000"
+                    canvasProps={{
+                      className: "w-full h-full cursor-crosshair touch-none"
+                    }} 
+                  />
+                </div>
               </div>
-              <div className="border-b-2 border-dashed border-gray-400 pb-6 relative">
-                <span className="absolute bottom-1 left-0 text-[10px] uppercase font-bold text-gray-500">Clearance Status</span>
+              <div className="flex justify-end mt-2">
+                <button type="button" onClick={clearSignature} className="text-[10px] md:text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-red-600 transition p-2">
+                  [ Clear Signature ]
+                </button>
               </div>
-              <div className="border-b-2 border-dashed border-gray-400 pb-6 relative">
-                <span className="absolute bottom-1 left-0 text-[10px] uppercase font-bold text-gray-500">Timestamp (UTC)</span>
-              </div>
+              {signatureError && <p className="text-red-500 text-xs font-bold uppercase mt-1">Signature is required to proceed.</p>}
             </div>
+          </div>
+          
+        </div>
+
+        {/* BOTTOM NAVIGATION BAR - Sticky on Mobile */}
+        <div className="fixed md:absolute bottom-0 left-0 w-full bg-white border-t-2 border-gray-200 p-4 md:p-6 z-50 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] md:shadow-none flex flex-row justify-between items-center gap-4">
+          
+          <div className="flex-1">
+            {currentStep > 0 && (
+              <button 
+                type="button" 
+                onClick={handlePrev}
+                className="flex items-center justify-center gap-2 w-full md:w-auto px-6 py-3 border-2 border-gray-300 text-gray-600 font-bold uppercase text-xs tracking-wider hover:bg-gray-50 transition"
+              >
+                <ChevronLeft className="w-4 h-4" /> Back
+              </button>
+            )}
+          </div>
+          
+          <div className="flex-1 flex justify-end">
+            {currentStep < 4 ? (
+              <button 
+                type="button" 
+                onClick={handleNext}
+                className="flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-black text-white font-black uppercase text-xs tracking-widest hover:bg-gray-800 transition shadow-lg"
+              >
+                Continue <ChevronRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button 
+                type="button" 
+                onClick={handleSubmit(onSubmit)}
+                disabled={submitting}
+                className="flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-red-700 text-white font-black uppercase text-xs tracking-widest hover:bg-red-800 transition shadow-lg disabled:bg-gray-400"
+              >
+                {submitting ? "Transmitting..." : "Submit Application"}
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="pt-8 border-t-4 border-double border-gray-300 mt-12 flex justify-between items-end">
-          <div className="hidden md:block text-[10px] font-mono text-gray-400 uppercase">
-            // END OF DOSSIER // EYES ONLY // WME-SEC
+        {/* Download Manual Form Link - Only visible on step 1 on desktop */}
+        {currentStep === 0 && (
+          <div className="hidden md:flex justify-center p-6 border-t border-gray-100 mb-20">
+            <DownloadBlankFormButton />
           </div>
-          <button 
-            type="submit" 
-            disabled={submitting}
-            className="w-full md:w-auto bg-red-700 text-white px-12 py-5 uppercase tracking-widest font-black text-sm hover:bg-red-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-3 shadow-lg"
-          >
-            {submitting ? "Transmitting..." : "Submit Official Record"}
-          </button>
-        </div>
-      </form>
+        )}
+      </div>
     </div>
   );
 }
