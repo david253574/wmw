@@ -197,13 +197,13 @@ export default function ApplicationForm() {
   const errorClasses = "text-red-500 text-xs font-bold mt-1 uppercase";
 
   return (
-    <div className="min-h-screen bg-gray-100 py-6 md:py-12 px-4 font-inter relative overflow-x-hidden">
+    <div className="min-h-screen bg-gray-100 py-0 sm:py-6 md:py-12 px-0 sm:px-4 font-inter relative overflow-x-hidden">
       {/* Background Watermark */}
       <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-0 opacity-[0.03] overflow-hidden">
         <span className="text-[100px] md:text-[200px] font-black tracking-widest transform -rotate-45 whitespace-nowrap">CLASSIFIED</span>
       </div>
 
-      <div className="max-w-4xl mx-auto bg-white shadow-2xl relative z-10 border border-gray-200">
+      <div className="max-w-4xl mx-auto bg-white sm:shadow-2xl relative z-10 border-0 sm:border border-gray-200">
         {/* Header */}
         <header className="bg-black text-white p-6 md:p-10 flex flex-col items-center text-center relative border-b-4 border-red-700">
           <ShieldAlert className="w-10 h-10 md:w-12 md:h-12 mb-4 text-gray-300" />
@@ -248,7 +248,7 @@ export default function ApplicationForm() {
         )}
 
         {/* FORM CONTENT */}
-        <div className="p-6 md:p-12 pb-24 md:pb-32">
+        <div className="p-4 sm:p-6 md:p-12 pb-24 md:pb-32">
           
           {/* STEP 1: PERSONAL INFO */}
           <div className={currentStep === 0 ? "block" : "hidden"}>
