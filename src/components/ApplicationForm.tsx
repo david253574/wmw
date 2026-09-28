@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import SignatureCanvas from "react-signature-canvas";
@@ -36,6 +36,36 @@ type FormValues = z.infer<typeof formSchema>;
 
 const STEPS = ["Personal", "Identity", "Organization", "Emergency", "Review"];
 
+const ReviewSummary = ({ control, photoPreview, idDocPreview }: { control: any, photoPreview: string | null, idDocPreview: string | null }) => {
+  const formData = useWatch({ control });
+  return (
+    <div className="bg-gray-50 border border-gray-300 p-4 md:p-6 mb-8 text-sm">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
+        <div>
+          <span className="block text-[10px] text-gray-500 uppercase font-bold">Applicant</span>
+          <p className="font-mono font-bold uppercase truncate">{formData.legalName || "—"}</p>
+        </div>
+        <div>
+          <span className="block text-[10px] text-gray-500 uppercase font-bold">Clearance Level</span>
+          <p className="font-mono font-bold text-red-700 uppercase truncate">{formData.accessLevel || "—"}</p>
+        </div>
+        <div>
+          <span className="block text-[10px] text-gray-500 uppercase font-bold">Gov ID</span>
+          <p className="font-mono uppercase truncate">{formData.idType || "—"} - {formData.idNumber || "—"}</p>
+        </div>
+        <div className="flex gap-4 items-center pt-2">
+          <div className="w-12 h-12 bg-gray-200 border border-gray-400 overflow-hidden shrink-0">
+            {photoPreview ? <img src={photoPreview} className="w-full h-full object-cover"/> : <span className="text-[8px] text-center p-2 text-gray-400 block">NO PHOTO</span>}
+          </div>
+          <div className="w-16 h-12 bg-gray-200 border border-gray-400 overflow-hidden shrink-0">
+            {idDocPreview ? <img src={idDocPreview} className="w-full h-full object-cover"/> : <span className="text-[8px] text-center p-2 text-gray-400 block">NO ID DOC</span>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function ApplicationForm() {
   const [currentStep, setCurrentStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
@@ -48,15 +78,27 @@ export default function ApplicationForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [idDocPreview, setIdDocPreview] = useState<string | null>(null);
   
-  const { register, handleSubmit, trigger, watch, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, trigger, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      legalName: "",
+      preferredName: "",
+      dob: "",
+      gender: "",
+      nationality: "",
+      phone: "",
+      email: "",
+      address: "",
+      idNumber: "",
+      emergencyName: "",
+      emergencyRelation: "",
+      emergencyPhone: "",
+      fanClubAffiliation: "",
+      favoriteMovie: "",
       accessLevel: "All-Access VIP Bundle",
       idType: "Passport"
     }
   });
-
-  const formData = watch();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, setPreview: (val: string | null) => void) => {
     const file = e.target.files?.[0];
@@ -150,7 +192,7 @@ export default function ApplicationForm() {
     );
   }
 
-  const inputClasses = "w-full p-3 md:p-4 border-2 border-gray-300 bg-gray-50 focus:bg-white focus:ring-0 focus:border-black font-medium transition-colors text-sm md:text-base rounded-none outline-none";
+  const inputClasses = "w-full p-3 md:p-4 border-2 border-gray-300 bg-gray-50 focus:bg-white focus:ring-0 focus:border-black font-medium transition-colors text-sm md:text-base rounded-none outline-none text-black placeholder-gray-400";
   const labelClasses = "block text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 mb-2";
   const errorClasses = "text-red-500 text-xs font-bold mt-1 uppercase";
 
@@ -418,30 +460,7 @@ export default function ApplicationForm() {
             </h3>
             
             {/* Mobile-Friendly Summary Box */}
-            <div className="bg-gray-50 border border-gray-300 p-4 md:p-6 mb-8 text-sm">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8">
-                <div>
-                  <span className="block text-[10px] text-gray-500 uppercase font-bold">Applicant</span>
-                  <p className="font-mono font-bold uppercase truncate">{formData.legalName}</p>
-                </div>
-                <div>
-                  <span className="block text-[10px] text-gray-500 uppercase font-bold">Clearance Level</span>
-                  <p className="font-mono font-bold text-red-700 uppercase truncate">{formData.accessLevel}</p>
-                </div>
-                <div>
-                  <span className="block text-[10px] text-gray-500 uppercase font-bold">Gov ID</span>
-                  <p className="font-mono uppercase truncate">{formData.idType} - {formData.idNumber}</p>
-                </div>
-                <div className="flex gap-4 items-center pt-2">
-                  <div className="w-12 h-12 bg-gray-200 border border-gray-400 overflow-hidden shrink-0">
-                    {photoPreview ? <img src={photoPreview} className="w-full h-full object-cover"/> : <span className="text-[8px] text-center p-2 text-gray-400 block">NO PHOTO</span>}
-                  </div>
-                  <div className="w-16 h-12 bg-gray-200 border border-gray-400 overflow-hidden shrink-0">
-                    {idDocPreview ? <img src={idDocPreview} className="w-full h-full object-cover"/> : <span className="text-[8px] text-center p-2 text-gray-400 block">NO ID DOC</span>}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ReviewSummary control={control} photoPreview={photoPreview} idDocPreview={idDocPreview} />
 
             {/* Legal Attestation */}
             <div className="bg-white border-2 border-gray-300 p-5 md:p-8 relative mb-8">
