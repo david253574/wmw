@@ -192,7 +192,7 @@ export default function ApplicationForm() {
     );
   }
 
-  const inputClasses = "w-full p-3 md:p-4 border-2 border-gray-300 bg-gray-50 focus:bg-white focus:ring-0 focus:border-black font-medium transition-colors text-sm md:text-base rounded-none outline-none text-black placeholder-gray-400";
+  const inputClasses = "w-full p-3 md:p-4 border-2 border-gray-300 bg-gray-50 focus:bg-white focus:ring-0 focus:border-black font-medium transition-colors text-base rounded-none outline-none text-black placeholder-gray-400";
   const labelClasses = "block text-[10px] md:text-xs font-bold uppercase tracking-widest text-gray-500 mb-2";
   const errorClasses = "text-red-500 text-xs font-bold mt-1 uppercase";
 
